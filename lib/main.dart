@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:english_words/english_words.dart';
-
 
 void main() => runApp(MyApp());
 
@@ -9,108 +7,58 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Appliance Power Monitor',
-      theme: new ThemeData( 
+      theme: new ThemeData(
         scaffoldBackgroundColor: Colors.white,
         primaryColor: Colors.white,
-        
       ),
-      home: RandomWords(),
+      home: PowerMonitor(),
     );
   }
 }
 
-class RandomWords extends StatefulWidget {
+class PowerMonitor extends StatefulWidget {
   @override
-  RandomWordsState createState() => new RandomWordsState();
+  PowerMonitorState createState() => new PowerMonitorState();
 }
 
-class RandomWordsState extends State<RandomWords> {
-  final List<WordPair> _suggestions = <WordPair>[];
-  final Set<WordPair> _saved = new Set<WordPair>();
-  final _biggerFont = const TextStyle(fontSize: 18.0);
+class PowerMonitorState extends State<PowerMonitor> {
+  bool _switchState1 = false;
+  bool _switchState2 = false;
 
-  void _pushSaved() {
-    Navigator.of(context).push(
-      new MaterialPageRoute<void>(
-       builder: (BuildContext context) {
-         final Iterable<ListTile> tiles = _saved.map(
-           (WordPair pair) {
-             return new ListTile(
-               title: new Text(
-                 pair.asPascalCase,
-                 style: _biggerFont,
-                ),
-             );
-           },
-          );
-        final List<Widget> divided = ListTile
-        .divideTiles(
-          context: context,
-          tiles: tiles,
-        )
-        .toList();
+  void _onChanged1(bool value) => setState(() => _switchState1 = value); 
+  void _onChanged2(bool value) => setState(() => _switchState2 = value);
 
-        return new Scaffold(
-          appBar: new AppBar(
-            title: const Text('Saved Suggestions'),
-          ),
-          body: new ListView(children: divided),
-          );
-       },
-      )
-    );
-  }
-  Widget build(BuildContext context)
-  {
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Startup Name Generator'),
-        actions: <Widget>[
-          new IconButton(icon: const Icon(Icons.list), onPressed: _pushSaved),
-        ],
-      ),
-      body: _buildSuggestions(),
-    );
-  }
+        appBar: AppBar(
+          title: Text('Appliance Power Monitor'),
+        ),
+        body: ListView(
+          padding: EdgeInsets.all(12.0),
+          children: [
+            new Card(
+              child: Text(
+              '0.0 kWh',
+              style: TextStyle(
+                fontSize: 28.0,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            ),
 
-  Widget _buildSuggestions() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
-      itemBuilder: (context, i){
-        if(i.isOdd) return Divider();
+            new SwitchListTile(
+                  value: _switchState1,
+                  onChanged: _onChanged1,
+                  title: new Text('Outlet On/Off', style: new TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+              ),
+            new SwitchListTile(
+                  value: _switchState2,
+                  onChanged: _onChanged2,
+                  title: new Text('High Performance Mode', style: new TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+              ),
 
-        final index = i ~/ 2;
-        if (index >= _suggestions.length){
-          _suggestions.addAll(generateWordPairs().take(10));
-        }
-        return _buildRow(_suggestions[index]);
-      }
-    );
-  }
-
-  Widget _buildRow(WordPair pair){
-    final bool alreadySaved = _saved.contains(pair);
-    return ListTile(
-      title: Text(
-        pair.asPascalCase,
-        style: _biggerFont
-      ),
-      trailing: new Icon(
-        alreadySaved ? Icons.favorite : Icons.favorite_border,
-        color: alreadySaved ? Colors.red : null,
-      ),
-      onTap: () {
-        setState((){
-          if (alreadySaved){
-            _saved.remove(pair);
-         } else {
-            _saved.add(pair);
-          }
-        });
-      }
-    );
+          ],
+        )
+      );
   }
 }
-
-
-
