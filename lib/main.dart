@@ -9,7 +9,7 @@ class MyApp extends StatelessWidget {
       title: 'Appliance Power Monitor',
       theme: new ThemeData(
         scaffoldBackgroundColor: Colors.white,
-        primaryColor: Colors.white,
+        primaryColor: Colors.blue,
       ),
       home: PowerMonitor(),
     );
@@ -25,7 +25,7 @@ class PowerMonitorState extends State<PowerMonitor> {
   bool _switchState1 = false;
   bool _switchState2 = false;
 
-  void _onChanged1(bool value) => setState(() => _switchState1 = value); 
+  void _onChanged1(bool value) => setState(() => _switchState1 = value);
   void _onChanged2(bool value) => setState(() => _switchState2 = value);
 
   Widget build(BuildContext context) {
@@ -33,32 +33,48 @@ class PowerMonitorState extends State<PowerMonitor> {
         appBar: AppBar(
           title: Text('Appliance Power Monitor'),
         ),
-        body: ListView(
-          padding: EdgeInsets.all(12.0),
+        body: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          //padding: EdgeInsets.all(12.0),
           children: [
-            new Card(
-              child: Text(
-              '0.0 kWh',
-              style: TextStyle(
-                fontSize: 28.0,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            ),
-
-            new SwitchListTile(
+            new Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '0.0',
+                    style: TextStyle(
+                      fontSize: 80.0,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  Text(
+                    'kWh',
+                    style: TextStyle(
+                      fontSize: 28.0,
+                      fontWeight: FontWeight.w200,
+                    ),
+                  ),
+                ]),
+            new Container(
+              child: Column(children: [
+                new SwitchListTile(
                   value: _switchState1,
                   onChanged: _onChanged1,
-                  title: new Text('Outlet On/Off', style: new TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-              ),
-            new SwitchListTile(
+                  title: new Text('Outlet On/Off',
+                      style: new TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.black)),
+                ),
+                new SwitchListTile(
                   value: _switchState2,
                   onChanged: _onChanged2,
-                  title: new Text('High Performance Mode', style: new TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-              ),
-
+                  title: new Text('High Performance Mode',
+                      style: new TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.black)),
+                ),
+              ]),
+            ),
           ],
-        )
-      );
+        ));
   }
 }
