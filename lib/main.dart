@@ -33,7 +33,8 @@ class PowerMonitorState extends State<PowerMonitor> {
   void _powerChange2(bool value) => setState(() => _highPerformance2 = value);
 
   Widget build(BuildContext context) {
-    double _powerUse = 0.4;
+    double _powerUse1 = _onOff1 ? 1.0 : 0.0;
+    double _powerUse2 = _onOff2 ? 1.0 : 0.0;
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -51,20 +52,20 @@ class PowerMonitorState extends State<PowerMonitor> {
               ),
           body: TabBarView(children: [
             new OutletColumn(
-              powerUse: _powerUse,
+              powerUse: _powerUse1,
               onOff: _onOff1,
               highPerformance: _highPerformance1,
               onChanged1: _onChange1,
               onChanged2: _powerChange1,
             ),
-            Icon(Icons.ac_unit)
-            // OutletColumn(
-            //   powerUse: _powerUse,
-            //   onOff: _onOff2,
-            //   highPerformance: _highPerformance2,
-            //   onChanged1: _onChange2,
-            //   onChanged2: _powerChange2,
-            // ),
+            //Icon(Icons.ac_unit)
+            new OutletColumn(
+              powerUse: _powerUse2,
+              onOff: _onOff2,
+              highPerformance: _highPerformance2,
+              onChanged1: _onChange2,
+              onChanged2: _powerChange2,
+            ),
           ])),
     );
   }
