@@ -32,11 +32,23 @@ class PowerMonitorState extends State<PowerMonitor> {
   void _onChange2(bool value) => setState(() => _onOff2 = value);
   void _powerChange2(bool value) => setState(() => _highPerformance2 = value);
 
+  bool _onOff3 = false;
+  bool _highPerformance3 = false;
+  void _onChange3(bool value) => setState(() => _onOff3 = value);
+  void _powerChange3(bool value) => setState(() => _highPerformance3 = value);
+
+  bool _onOff4 = false;
+  bool _highPerformance4 = false;
+  void _onChange4(bool value) => setState(() => _onOff4 = value);
+  void _powerChange4(bool value) => setState(() => _highPerformance4 = value);
+
   Widget build(BuildContext context) {
     double _powerUse1 = _onOff1 ? 1.0 : 0.0;
-    double _powerUse2 = _onOff2 ? 1.0 : 0.0;
+    double _powerUse2 = _onOff2 ? 2.0 : 0.0;
+    double _powerUse3 = _onOff3 ? 3.0 : 0.0;
+    double _powerUse4 = _onOff4 ? 4.0 : 0.0;
     return DefaultTabController(
-      length: 2,
+      length: 4,
       child: Scaffold(
           appBar: AppBar(
               
@@ -44,8 +56,8 @@ class PowerMonitorState extends State<PowerMonitor> {
                 tabs: [
                 Tab(text: '1'),
                 Tab(text: '2'),
-                // Tab(text: '3'),
-                // Tab(text: '4'),
+                Tab(text: '3'),
+                Tab(text: '4'),
               ]
               ),
               title: Text('Appliance Power Monitor'),
@@ -58,13 +70,29 @@ class PowerMonitorState extends State<PowerMonitor> {
               onChanged1: _onChange1,
               onChanged2: _powerChange1,
             ),
-            //Icon(Icons.ac_unit)
+
             new OutletColumn(
               powerUse: _powerUse2,
               onOff: _onOff2,
               highPerformance: _highPerformance2,
               onChanged1: _onChange2,
               onChanged2: _powerChange2,
+            ),
+
+            new OutletColumn(
+              powerUse: _powerUse3,
+              onOff: _onOff3,
+              highPerformance: _highPerformance3,
+              onChanged1: _onChange3,
+              onChanged2: _powerChange3,
+            ),
+
+            new OutletColumn(
+              powerUse: _powerUse4,
+              onOff: _onOff4,
+              highPerformance: _highPerformance4,
+              onChanged1: _onChange4,
+              onChanged2: _powerChange4,
             ),
           ])),
     );
