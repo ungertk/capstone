@@ -22,11 +22,11 @@ class PowerMonitor extends StatefulWidget {
 }
 
 class PowerMonitorState extends State<PowerMonitor> {
-  bool _switchState1 = false;
-  bool _switchState2 = false;
+  bool _onOff1 = false;
+  bool _highPerformance1 = false;
+  void _onChanged1(bool value) => setState(() => _onOff1 = value);
+  void _onChanged2(bool value) => setState(() => _highPerformance1 = value);
 
-  void _onChanged1(bool value) => setState(() => _switchState1 = value);
-  void _onChanged2(bool value) => setState(() => _switchState2 = value);
 
   Widget build(BuildContext context) {
     double _powerUse = 0.0;
@@ -34,7 +34,41 @@ class PowerMonitorState extends State<PowerMonitor> {
         appBar: AppBar(
           title: Text('Appliance Power Monitor'),
         ),
-        body: Column(
+        body: Center(
+          child: 
+          OutletColumn(
+            powerUse: _powerUse,
+            onOff: _onOff1,
+            highPerformance: _highPerformance1,
+            onChanged1: _onChanged1,
+            onChanged2: _onChanged2,
+          ),
+        )
+      );
+  }
+}
+
+class OutletColumn extends StatelessWidget{
+    OutletColumn({Key key, this.powerUse, this.onOff, this.highPerformance, this.onChanged1, this.onChanged2}): super(key: key);
+
+    final double powerUse;
+    final bool onOff;
+    final bool highPerformance;
+    final ValueChanged onChanged1;
+    final ValueChanged onChanged2;
+
+    void _handleChange1()
+    {
+      onChanged1(onOff);
+    }
+    _handleChange2()
+    {
+      onChanged2(highPerformance);
+    }
+
+  Widget build(BuildContext context)
+  {
+    return Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             new Row(
@@ -42,7 +76,7 @@ class PowerMonitorState extends State<PowerMonitor> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    _powerUse.toString(),
+                    powerUse.toString(),
                     style: TextStyle(
                       fontSize: 80.0,
                       fontWeight: FontWeight.w400,
@@ -59,15 +93,15 @@ class PowerMonitorState extends State<PowerMonitor> {
             new Container(
               child: Column(children: [
                 new SwitchListTile(
-                  value: _switchState1,
-                  onChanged: _onChanged1,
+                  value: onOff,
+                  onChanged: _handleChange1,
                   title: new Text('Outlet On/Off',
                       style: new TextStyle(
                           fontWeight: FontWeight.bold, color: Colors.black)),
                 ),
                 new SwitchListTile(
-                  value: _switchState2,
-                  onChanged: _onChanged2,
+                  value: highPerformance,
+                  onChanged: _handleChange2,
                   title: new Text('High Performance Mode',
                       style: new TextStyle(
                           fontWeight: FontWeight.bold, color: Colors.black)),
@@ -75,11 +109,6 @@ class PowerMonitorState extends State<PowerMonitor> {
               ]),
             ),
           ],
-        )
-      );
-  }
-  Widget buildOutletColumn(double _powerUse, bool _onOff, bool highPerformance)
-  {
-    
+    );
   }
 }
