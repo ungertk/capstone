@@ -29,20 +29,20 @@ class PowerMonitorState extends State<PowerMonitor> {
   void _onChanged2(bool value) => setState(() => _switchState2 = value);
 
   Widget build(BuildContext context) {
+    double _powerUse = 0.0;
     return Scaffold(
         appBar: AppBar(
           title: Text('Appliance Power Monitor'),
         ),
         body: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          //padding: EdgeInsets.all(12.0),
           children: [
             new Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    '0.0',
+                    _powerUse.toString(),
                     style: TextStyle(
                       fontSize: 80.0,
                       fontWeight: FontWeight.w400,
@@ -75,6 +75,11 @@ class PowerMonitorState extends State<PowerMonitor> {
               ]),
             ),
           ],
-        ));
+        )
+      );
+  }
+  Widget buildOutletColumn(double _powerUse, bool _onOff, bool highPerformance)
+  {
+    
   }
 }
