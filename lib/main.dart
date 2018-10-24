@@ -24,12 +24,12 @@ class PowerMonitor extends StatefulWidget {
 class PowerMonitorState extends State<PowerMonitor> {
   bool _onOff1 = false;
   bool _highPerformance1 = false;
-  void _onChanged1(bool value) => setState(() => _onOff1 = value);
-  void _onChanged2(bool value) => setState(() => _highPerformance1 = value);
+  void _onChange1(bool value) => setState(() => _onOff1 = value);
+  void _powerChange1(bool value) => setState(() => _highPerformance1 = value);
 
 
   Widget build(BuildContext context) {
-    double _powerUse = 0.0;
+    double _powerUse = 0.4;
     return Scaffold(
         appBar: AppBar(
           title: Text('Appliance Power Monitor'),
@@ -40,8 +40,8 @@ class PowerMonitorState extends State<PowerMonitor> {
             powerUse: _powerUse,
             onOff: _onOff1,
             highPerformance: _highPerformance1,
-            onChanged1: _onChanged1,
-            onChanged2: _onChanged2,
+            onChanged1: _onChange1,
+            onChanged2: _powerChange1,
           ),
         )
       );
@@ -54,17 +54,8 @@ class OutletColumn extends StatelessWidget{
     final double powerUse;
     final bool onOff;
     final bool highPerformance;
-    final ValueChanged onChanged1;
-    final ValueChanged onChanged2;
-
-    void _handleChange1()
-    {
-      onChanged1(onOff);
-    }
-    _handleChange2()
-    {
-      onChanged2(highPerformance);
-    }
+    final ValueChanged<bool> onChanged1;
+    final ValueChanged<bool> onChanged2;
 
   Widget build(BuildContext context)
   {
@@ -94,14 +85,14 @@ class OutletColumn extends StatelessWidget{
               child: Column(children: [
                 new SwitchListTile(
                   value: onOff,
-                  onChanged: _handleChange1,
+                  onChanged: onChanged1,
                   title: new Text('Outlet On/Off',
                       style: new TextStyle(
                           fontWeight: FontWeight.bold, color: Colors.black)),
                 ),
                 new SwitchListTile(
                   value: highPerformance,
-                  onChanged: _handleChange2,
+                  onChanged: onChanged2,
                   title: new Text('High Performance Mode',
                       style: new TextStyle(
                           fontWeight: FontWeight.bold, color: Colors.black)),
