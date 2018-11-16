@@ -14,7 +14,7 @@ const char* ssid     = "esptest";
 const char* password = "buckeyes1";
 
 const float ACS_CURRENT_RANGE = 5; //5 amp max current meas
-int ZERO_PT = 1810;
+int ZERO_PT[] = {1810, 1810, 1810, 1810};
 
 const int relay_io_map[] = {16, 17, 18, 19, 4, 2, 23, 22}; //the I/Os being used for relay control
 int relay_states[] = {0,0,0,0};
@@ -63,10 +63,14 @@ void setup() {
 
   // now get ZERO_PT
   int zsum = 0;
-  for (int k = 0 ; k < 100 ; k++) {
-    zsum += analogRead(acs_io_map[0]);
+  for (int j = 0 ; j < 4 ; j++) {
+    for (int k = 0 ; k < 100 ; k++) {
+      zsum += analogRead(acs_io_map[j]);
+    }
+    ZERO_PT[j] = zsum / 100;
+    zsum = 0;
   }
-  ZERO_PT = zsum / 100;
+  
 
   Serial.println("");
   Serial.print("Connected to ");
@@ -122,29 +126,29 @@ int adcAverage(int pin) {
   return reading / 50;
 }
 
-float getCurrent (int pin) {
+float getCurrent (int pin, int pinIdx) {
   int maxDiff = 0;
   int reading = 0;
   int reads[200];
   for (int i = 0 ; i < 200 ; i++) {
     reading = analogRead(pin);
     reads[i] = reading;
-    int abRead = abs(reading - ZERO_PT);
+    int abRead = abs(reading - ZERO_PT[pinIdx]);
     if (abRead > maxDiff) {
       maxDiff = abRead;
     }
     delayMicroseconds(500);
   }
 
-  return getRMS(reads, 200);
+  return getRMS(reads, 200, pinIdx);
 }
 
-int rawToPower(int reading, pin) {
-  return pin != 2 ? int(reading * 10.0 * 120.0 / 4096.0) : int(reading * 30.0 * 120.0 / 4096.0);
+int rawToPower(int reading, int pin) {
+  return pin != 2 ? int(reading * 12.5 * 120.0 / 4096.0) : int(reading * 1.40 * 12.5*3 * 120.0 / 4096.0);
 }
 
 void handleRoot() {
-  char temp[1600];
+  char temp[3200];
   int sec = millis() / 1000;
   int min = sec / 60;
   int hr = min / 60;
@@ -155,34 +159,67 @@ void handleRoot() {
 
   int reads[] = {0, 0, 0, 0};
   for (int i = 0; i < 4; i++) {
-    reads[i] = getCurrent(acs_io_map[i]);
+    reads[i] = getCurrent(acs_io_map[i], i);
   }
-  snprintf(temp, 1600,
+  snprintf(temp, 3200,
 
 
            "<html><head>\
     <title>Smart Outlet</title>\
     <style>\
-      body { background-color: #cccccc; font-family: Arial, Helvetica, Sans-Serif; Color: #880000; }\
-    </style>\
+      </style>\
   </head>\
   <script>window.history.pushState('', '', '/');</script>\
   <body>\
-    <h1>B U Q Q B O I S</h1>\
+<nav class='navbar navbar-default'>\
+  <div class='container-fluid'>\
+    <div class'navbar-header'>\
+      <a class='navbar-brand' href='#'>Team 5 Smart Outlet</a>\
+    </div>\
+    <ul class='nav navbar-nav pull-right'>\
+    <li><a href='/'>Refresh</a></li>\
+    </ul>\
+  </div>\
+</nav>\
+<div class='container'>\
+  <div class='row'>\
+    <div class='outbox col-xs-6'>\
+    <h2>Line 0</h2>\
+    <h3>(%d) %d W</h3>\
+    <button class='btn btn-dark' onclick=\"window.location.href='/a0?pin=0'\">More</button>\
+    <button class='btn btn-dark' onclick=\"window.location.href='/r0'\">Toggle</button>\
+    </div>\
+    <div class='outbox col-xs-6'>\
+    <h2>Line 1</h2>\
+    <h3>(%d) %d W</h3>\
+    <button class='btn btn-dark' onclick=\"window.location.href='/a1?pin=1'\">More</button>\
+    <button class='btn btn-dark' onclick=\"window.location.href='/r1'\">Toggle</button>\
+    </div>\
+  </div>\
+  <div class='row'>\
+    <div class='outbox col-xs-6'>\
+    <h2>Line 2</h2>\
+    <h3>(%d) %d W</h3>\
+    <button class='btn btn-dark' onclick=\"window.location.href='/a2?pin=2'\">More</button>\
+    <button class='btn btn-dark' onclick=\"window.location.href='/r2'\">Toggle</button>\
+    </div>\
+    <div class='outbox col-xs-6'>\
+    <h2>Line 3</h2>\
+    <h3>(%d) %d W</h3>\
+    <button class='btn btn-dark' onclick=\"window.location.href='/a3?pin=3'\">More</button>\
+    <button class='btn btn-dark' onclick=\"window.location.href='/r3'\">Toggle</button>\
+    </div>\
+  </div>\
+</div>\
     <p>Uptime: %02d:%02d:%02d</p>\
-    <button onclick=\"window.location.href='/'\">refresh</button>\
-    <table><tr><td>Analog 0:</td><td>(%d) %d W<button onclick=\"window.location.href='/a0?pin=0'\">More</button></td></tr>\
-    <tr><td>Analog 1:</td><td>(%d) %d W<button onclick=\"window.location.href='/a1?pin=1'\">More</button></td></tr>\
-    <tr><td>Analog 2:</td><td>(%d) %d W<button onclick=\"window.location.href='/a2?pin=2'\">More</button></td></tr>\
-    <tr><td>Analog 3:</td><td>(%d) %d W<button onclick=\"window.location.href='/a3?pin=3'\">More</button></td></tr>\
-    <tr><td>Relay 0</td><td><button onclick=\"window.location.href='/r0'\">Toggle</button></td></tr>\
-    <tr><td>Relay 1</td><td><button onclick=\"window.location.href='/r1'\">Toggle</button></td></tr>\
-    <tr><td>Relay 2</td><td><button onclick=\"window.location.href='/r2'\">Toggle</button></td></tr>\
-    <tr><td>Relay 3</td><td><button onclick=\"window.location.href='/r3'\">Toggle</button></td></tr></table>\
   </body>\
+  <script src='https://code.jquery.com/jquery-3.3.1.min.js'></script>\
+<link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css' integrity='sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u' crossorigin='anonymous'>\
+<link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css' integrity='sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp' crossorigin='anonymous'>\
+<script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js' integrity='sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa' crossorigin='anonymous'></script>\
 </html>",
 
-           hr, min % 60, sec % 60, reads[0], rawToPower(reads[0]),reads[1], rawToPower(reads[1]),reads[2], rawToPower(reads[2]),reads[3], rawToPower(reads[3])
+            reads[0], rawToPower(reads[0], 0),reads[1], rawToPower(reads[1], 1),reads[2], rawToPower(reads[2], 2),reads[3], rawToPower(reads[3], 3), hr, min % 60, sec % 60
           );
   server.send(200, "text/html", temp);
 }
@@ -204,6 +241,9 @@ void handleAnalogReport(int pinIdx, int pin) {
     <h1>Analog Report for pin %d</h1>\
     <img src=\"/test.svg?pin=%d\" />\
   </body>\
+<link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css' integrity='sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u' crossorigin='anonymous'>\
+<link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css' integrity='sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp' crossorigin='anonymous'>\
+<script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js' integrity='sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa' crossorigin='anonymous'></script>\
 </html>",
 
            pin, pinIdx);
@@ -265,7 +305,7 @@ void drawGraph() {
   for (int x = 0; x < 200; x++) {
     int rd = (analogRead(pin));
     reads[x] = rd;
-    int diff = abs(rd - ZERO_PT);
+    int diff = abs(rd - ZERO_PT[pin]);
     if (diff > maxDiff) {
       maxDiff = diff;
     }
@@ -280,18 +320,18 @@ void drawGraph() {
   Serial.println("chart1");
   
   // Calc RMS
-  int rms = getRMS(reads, 200);
-  sprintf(temp, "<line x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke-dasharray=\"4\" stroke=\"rgb(0, 255, 0)\" stroke-width=\"1\" />\n", 0, int(((ZERO_PT-rms)/4096.0) * 500), 800, int(((ZERO_PT-rms)/4096.0) * 500));
+  int rms = getRMS(reads, 200, pin);
+  sprintf(temp, "<line x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke-dasharray=\"4\" stroke=\"rgb(0, 255, 0)\" stroke-width=\"1\" />\n", 0, int(((ZERO_PT[pin]-rms)/4096.0) * 500), 800, int(((ZERO_PT[pin]-rms)/4096.0) * 500));
   out += temp;
-  sprintf(temp, "<line x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke-dasharray=\"4\" stroke=\"rgb(0, 255, 0)\" stroke-width=\"1\" />\n", 0, int(((ZERO_PT+rms)/4096.0) * 500), 800, int(((ZERO_PT+rms)/4096.0) * 500));
+  sprintf(temp, "<line x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke-dasharray=\"4\" stroke=\"rgb(0, 255, 0)\" stroke-width=\"1\" />\n", 0, int(((ZERO_PT[pin]+rms)/4096.0) * 500), 800, int(((ZERO_PT[pin]+rms)/4096.0) * 500));
   out += temp;
 
   Serial.println("chart2");
 
   // draw max line
-  int maxDiff1 = int((ZERO_PT/4096.0) * 500) - int((maxDiff/4096.0) * 500);
-  int maxDiff2 = int((ZERO_PT/4096.0) * 500) + int((maxDiff/4096.0) * 500);
-  sprintf(temp, "<line x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke=\"rgb(0, 0, 255)\" stroke-width=\"1\" />\n", 0, int((ZERO_PT/4096.0) * 500), 800, int((ZERO_PT/4096.0) * 500));
+  int maxDiff1 = int((ZERO_PT[pin]/4096.0) * 500) - int((maxDiff/4096.0) * 500);
+  int maxDiff2 = int((ZERO_PT[pin]/4096.0) * 500) + int((maxDiff/4096.0) * 500);
+  sprintf(temp, "<line x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke=\"rgb(0, 0, 255)\" stroke-width=\"1\" />\n", 0, int((ZERO_PT[pin]/4096.0) * 500), 800, int((ZERO_PT[pin]/4096.0) * 500));
   out += temp;
 
   sprintf(temp, "<line x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke=\"rgb(255, 0, 0)\" stroke-width=\"1\" />\n", 0, maxDiff1, 800, maxDiff1);
@@ -308,10 +348,10 @@ void drawGraph() {
 }
 
 // rms of abs(arr[x] - ZERO_PT)
-int getRMS(int *arr, int len) {
+int getRMS(int *arr, int len, int pin) {
   int tot = 0;
   for (int i = 0 ; i < len ; i++) {
-    tot += sq(ZERO_PT - arr[i]);
+    tot += sq(ZERO_PT[pin] - arr[i]);
   }
   return sqrt(tot/len);
 }
