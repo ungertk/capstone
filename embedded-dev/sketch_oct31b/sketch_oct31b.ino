@@ -6,12 +6,18 @@
 
 #include <WiFi.h>
 #include <WiFiClient.h>
+#include <PubSubClient.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <driver/adc.h>
 
-const char* ssid     = "esptest";
-const char* password = "buckeyes1";
+const char* ssid     = "BOX OF ROCKS-2G";  //"esptest";
+const char* password = "doubleunit022";  //"buckeyes1";
+
+const char* mqttServer = "m15.cloudmqtt.com";
+const int mqttPort = 11322;
+const char* mqttUser = "akyumnii";
+const char* mqttPassword = "Z2HnUN3RumXD";
 
 const float ACS_CURRENT_RANGE = 5; //5 amp max current meas
 int ZERO_PT[] = {1810, 1810, 1810, 1810};
@@ -21,7 +27,12 @@ int relay_states[] = {0,0,0,0};
 const int acs_io_map[] = {34, 32, 35, 33}; //the I/Os being used for ACS723 input
 
 WebServer server(80);
+WiFiClient espClient;
+PubSubClient client(espClient);
 
+long lastMsg = 0;
+char msg[50];
+int value = 0;
 /*
  * setup()
  */
@@ -51,10 +62,29 @@ void setup() {
   Serial.println("");
 
   // Wait for connection
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED) 
+  {
     delay(500);
     Serial.print(".");
   }
+
+  client.setServer(mqttServer, mqttPort);
+ 
+  while (!client.connected()) 
+  {
+    Serial.println("Connecting to MQTT..."); 
+    if (client.connect("ESP32Client", mqttUser, mqttPassword )) 
+    { 
+      Serial.println("connected");   
+    } 
+    else 
+    {
+      Serial.print("failed with state ");
+      Serial.print(client.state());
+      delay(2000); 
+    }
+}
+  client.setCallback(callback);
 
   for (int j = 0 ; j < 4 ; j++) {
     setRelay(j,0);
@@ -89,6 +119,54 @@ void setup() {
   Serial.println("HTTP server started");
 }
 
+void callback(char* topic, byte* message, unsigned int length) {
+  Serial.print("Message arrived on topic: ");
+  Serial.print(topic);
+  Serial.print(". Message: ");
+  String messageTemp;
+  
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)message[i]);
+    messageTemp += (char)message[i];
+  }
+  Serial.println();
+
+  // Feel free to add more if statements to control more GPIOs with MQTT
+
+  // If a message is received on the topic esp32/output, you check if the message is either "on" or "off". 
+  // Changes the output state according to the message
+  if (String(topic) == "esp32/output") {
+    Serial.print("Changing output to ");
+    if(messageTemp == "on"){
+      Serial.println("on");
+      digitalWrite(ledPin, HIGH);
+    }
+    else if(messageTemp == "off"){
+      Serial.println("off");
+      digitalWrite(ledPin, LOW);
+    }
+  }
+}
+
+void reconnect() {
+  // Loop until we're reconnected
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Attempt to connect
+    if (client.connect("ESP8266Client")) {
+      Serial.println("connected");
+      // Subscribe
+      client.subscribe("esp32/output");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}
+
 void setRelay(int relayIndex, int state) {
   int i = relayIndex;
   Serial.println("Toggling GPIOs " +  String(relay_io_map[2*i]) + ", " + String(relay_io_map[2*i+1]));
@@ -107,7 +185,30 @@ void setRelayState(int relayIndex, int state) {
 /*
  * loop()
  */
-void loop() {
+void loop() 
+{
+  if (!client.connected()) 
+  {
+    reconnect();
+  }
+  client.loop();
+  long now = millis();
+    
+  if (now - lastMsg > 5000) 
+  {
+    lastMsg = now;
+    int acs_res[] = {0,0,0,0};
+    read_acs(acs_res);
+
+    int reads[] = {0, 0, 0, 0};
+    for (int i = 0; i < 4; i++) 
+    {
+      reads[i] = getCurrent(acs_io_map[i], i);
+      Serial.print("Outlet %d: ", i);
+      Serial.println(reads[i]);
+      client.publish("esp32/outlet" + i, reads[i]);
+    }
+  }
   server.handleClient();
 }
 
