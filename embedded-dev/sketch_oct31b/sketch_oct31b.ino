@@ -139,11 +139,11 @@ void callback(char* topic, byte* message, unsigned int length) {
     Serial.print("Changing output to ");
     if(messageTemp == "on"){
       Serial.println("on");
-      digitalWrite(ledPin, HIGH);
+      //digitalWrite(ledPin, HIGH);
     }
     else if(messageTemp == "off"){
       Serial.println("off");
-      digitalWrite(ledPin, LOW);
+      //digitalWrite(ledPin, LOW);
     }
   }
 }
@@ -204,9 +204,14 @@ void loop()
     for (int i = 0; i < 4; i++) 
     {
       reads[i] = getCurrent(acs_io_map[i], i);
-      Serial.print("Outlet %d: ", i);
+      Serial.print("Outlet: ");
+      Serial.print(i);
       Serial.println(reads[i]);
-      client.publish("esp32/outlet" + i, reads[i]);
+      char topic[32];
+      char payload[32];
+      snprintf(topic, 32, "esp32/outlet/%d/data", i);
+      snprintf(payload, 32, "%d", rawToPower(reads[i], i));
+      client.publish(topic, payload);
     }
   }
   server.handleClient();
