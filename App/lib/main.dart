@@ -300,67 +300,6 @@ class OutletColumn extends StatelessWidget {
     );
   }
 }
-
-
-
-
-
-//   void _onMessage(List<MQTT.MqttReceivedMessage> event) {
-//     print(event.length);
-//     final MQTT.MqttPublishMessage recMess =
-//         event[0].payload as MQTT.MqttPublishMessage;
-//     final String message =
-//         MQTT.MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
-
-//     /// The above may seem a little convoluted for users only interested in the
-//     /// payload, some users however may be interested in the received publish message,
-//     /// lets not constrain ourselves yet until the package has been in the wild
-//     /// for a while.
-//     /// The payload is a byte buffer, this will be specific to the topic
-//     print('MQTT message: topic is <${event[0].topic}>, '
-//         'payload is <-- ${message} -->');
-//     print(client.connectionState);
-//     setState(() {
-//       messages.add(Message(
-//         topic: event[0].topic,
-//         message: message,
-//         qos: recMess.payload.header.qos,
-//       ));
-//       try {
-//         messageController.animateTo(
-//           0.0,
-//           duration: Duration(milliseconds: 400),
-//           curve: Curves.easeOut,
-//         );
-//       } catch (_) {
-//         // ScrollController not attached to any scroll views.
-//       }
-//     });
-//   }
-
-//   void _subscribeToTopic(String topic) {
-//     if (connectionState == MQTT.ConnectionState.connected) {
-//       setState(() {
-//         if (topics.add(topic.trim())) {
-//           print('Subscribing to ${topic.trim()}');
-//           client.subscribe(topic, MQTT.MqttQos.exactlyOnce);
-//         }
-//       });
-//     }
-//   }
-
-//   void _unsubscribeFromTopic(String topic) {
-//     if (connectionState == MQTT.ConnectionState.connected) {
-//       setState(() {
-//         if (topics.remove(topic.trim())) {
-//           print('Unsubscribing from ${topic.trim()}');
-//           client.unsubscribe(topic);
-//         }
-//       });
-//     }
-//   }
-
-// }
  
 
 
