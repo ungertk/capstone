@@ -10,6 +10,7 @@
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <driver/adc.h>
+#include <esp_wifi.h>
 
 const char* ssid     = "BOX OF ROCKS-2G";  //"esptest";
 const char* password = "doubleunit022";  //"buckeyes1";
@@ -22,9 +23,9 @@ const char* mqttPassword = "Z2HnUN3RumXD";
 const float ACS_CURRENT_RANGE = 5; //5 amp max current meas
 int ZERO_PT[] = {1810, 1810, 1810, 1810};
 
-const int relay_io_map[] = {16, 17, 18, 19, 4, 2, 23, 22}; //the I/Os being used for relay control
+const int relay_io_map[] = {18, 19, 23, 22, 17, 16, 4, 2}; //the I/Os being used for relay control
 int relay_states[] = {0,0,0,0};
-const int acs_io_map[] = {34, 32, 35, 33}; //the I/Os being used for ACS723 input
+const int acs_io_map[] = {33, 35, 32, 34}; //the I/Os being used for ACS723 input
 
 WebServer server(80);
 WiFiClient espClient;
@@ -263,7 +264,18 @@ float getCurrent (int pin, int pinIdx) {
 }
 
 int rawToPower(int reading, int pin) {
-  return pin != 2 ? int(reading * 12.5 * 120.0 / 4096.0) : int(reading * 1.40 * 12.5*3 * 120.0 / 4096.0);
+  if (pin != 3) {
+    return int(reading * 12.5 * 120.0 / 4096.0);
+  }
+  //else, wwe can fit to our calibration curve
+  int rawRead = int(reading * 12.5*4 * 120.0 / 4096.0);
+
+  if (rawRead > 40) {
+    return rawRead;
+  }
+
+  float adj = .6 + (.2/20) * rawRead;
+  return int(adj * rawRead);
 }
 
 void handleRoot() {
@@ -377,9 +389,9 @@ void handleNotFound() {
   for (int i = 0 ; i < 4 ; i++){
     if (path.endsWith("/r"+String(i))) {
       found = 1;
-      handleRoot();
       setRelayState(i, !relay_states[i]);
       setRelay(i, 1);
+      handleRoot();
       return;
     }
   }
@@ -415,14 +427,15 @@ void drawGraph() {
   String out = "";
   int reads[200];
   int maxDiff = 0;
-  int pin = acs_io_map[server.arg("pin").toInt()];
+  int pin = server.arg("pin").toInt();
+  int pinGPIO = acs_io_map[pin];
   
-  char temp[150];
+  char temp[250];
   out += "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"800\" height=\"500\">\n";
   out += "<rect width=\"800\" height=\"500\" fill=\"rgb(250, 230, 210)\" stroke-width=\"1\" stroke=\"rgb(0, 0, 0)\" />\n";
   out += "<g stroke=\"black\">\n";
   for (int x = 0; x < 200; x++) {
-    int rd = (analogRead(pin));
+    int rd = (analogRead(pinGPIO));
     reads[x] = rd;
     int diff = abs(rd - ZERO_PT[pin]);
     if (diff > maxDiff) {
