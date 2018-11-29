@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mqtt_client/mqtt_client.dart' as MQTT;
+import 'dart:async';
 
 
 
@@ -26,7 +27,16 @@ class PowerMonitor extends StatefulWidget {
 }
 
 class PowerMonitorState extends State<PowerMonitor> {
+  bool mqttConnected = false;
+  
   MQTT.MqttClient client;
+  StreamSubscription subscription;
+
+  double _powerUse1 = 0.0;
+  double _powerUse2 = 0.0;
+  double _powerUse3 = 0.0;
+  double _powerUse4 = 0.0;
+
   bool _onOff1 = false;
   bool _highPerformance1 = false;
   void _onChange1(bool value)
@@ -64,13 +74,18 @@ class PowerMonitorState extends State<PowerMonitor> {
   void _powerChange4(bool value) => setState(() => _highPerformance4 = value);
 
   Future <int> mqttConnect() async {
-    client = MQTT.MqttClient.withPort('m15.cloudmqtt.com', 'a', 11322);
+    client = MQTT.MqttClient.withPort('m15.cloudmqtt.com', 'BuqqApp', 11322);
     client.setProtocolV311();
     client.logging(on: true);
 
     await client.connect("akyumnii","Z2HnUN3RumXD");
     if (client.connectionStatus.state == MQTT.ConnectionState.connected) {
       print("iotcore client connected");
+      _subscribeToTopic("esp32/outlet0/data");
+      _subscribeToTopic("esp32/outlet1/data");
+      _subscribeToTopic("esp32/outlet2/data");
+      _subscribeToTopic("esp32/outlet3/data");
+      subscription = client.updates.listen(_onMessage); 
     } else {
     print(
     "ERROR iotcore client connection failed - disconnecting, state is ${client
@@ -94,12 +109,68 @@ class PowerMonitorState extends State<PowerMonitor> {
     );
   }
 
+  void _subscribeToTopic(String topic) {
+    if (client.connectionStatus.state == MQTT.ConnectionState.connected) {
+      setState(() {
+          print('Subscribing to ${topic.trim()}');
+          client.subscribe(topic, MQTT.MqttQos.exactlyOnce);
+      });
+    }
+  }
+
+void _onMessage(List<MQTT.MqttReceivedMessage> event) {
+    print(event.length);
+    final MQTT.MqttPublishMessage recMess =
+        event[0].payload as MQTT.MqttPublishMessage;
+    final String message =
+        MQTT.MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
+
+    /// The above may seem a little convoluted for users only interested in the
+    /// payload, some users however may be interested in the received publish message,
+    /// lets not constrain ourselves yet until the package has been in the wild
+    /// for a while.
+    /// The payload is a byte buffer, this will be specific to the topic
+    print('MQTT message: topic is <${event[0].topic}>, '
+        'payload is <-- ${message} -->');
+    print(client.connectionStatus.state);
+    
+      if(event[0].topic == "esp32/outlet0/data")
+      {
+        setState(() {
+        print("power1 updated.");
+        _powerUse1 =  double.parse(message);
+        });
+      }   
+      if(event[0].topic == "esp32/outlet1/data")
+      {
+        setState(() {
+        print("power2 updated.");
+        _powerUse2 =  double.parse(message);
+        });
+      }
+      if(event[0].topic == "esp32/outlet2/data")
+      {
+        setState(() {
+        print("power3 updated.");
+        _powerUse3 =  double.parse(message);
+        });
+      }
+      if(event[0].topic == "esp32/outlet3/data")
+      {
+        setState(() {
+        print("power4 updated.");
+        _powerUse4 =  double.parse(message);
+        });
+      }
+}
+
  Widget build(BuildContext context) {
-    mqttConnect();
-    double _powerUse1 = _onOff1 ? 1.0 : 0.0;
-    double _powerUse2 = _onOff2 ? 2.0 : 0.0;
-    double _powerUse3 = _onOff3 ? 3.0 : 0.0;
-    double _powerUse4 = _onOff4 ? 4.0 : 0.0;
+   if(!mqttConnected)
+   {
+     mqttConnect();  
+     mqttConnected = true;
+   }
+    
     return DefaultTabController(
       length: 4,
       child: Scaffold(

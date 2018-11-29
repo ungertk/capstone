@@ -68,6 +68,11 @@ void setup() {
     delay(500);
     Serial.print(".");
   }
+  Serial.println("");
+  Serial.print("Connected to ");
+  Serial.println(ssid);
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
 
   client.setServer(mqttServer, mqttPort);
  
@@ -106,13 +111,6 @@ void setup() {
     zsum = 0;
   }
   
-
-  Serial.println("");
-  Serial.print("Connected to ");
-  Serial.println(ssid);
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-
   if (MDNS.begin("esp32")) {
     Serial.println("MDNS responder started");
   }
@@ -217,14 +215,19 @@ void loop()
     int reads[] = {0, 0, 0, 0};
     for (int i = 0; i < 4; i++) 
     {
-//      reads[i] = getCurrent(acs_io_map[i], i);
-//      Serial.print("Outlet: ");
-//      Serial.print(i);
-//      Serial.println(reads[i]);
+      reads[i] = getCurrent(acs_io_map[i], i);
+      if(i == 0)
+      {
+        Serial.print("Outlet: ");
+        Serial.print(i);
+        Serial.println(reads[i]);
+      }
+
       char topic[32];
       char payload[32];
       snprintf(topic, 32, "esp32/outlet%d/data", i);
       snprintf(payload, 32, "%d", rawToPower(reads[i], i));
+      Serial.println(topic);
       client.publish(topic, payload);
     }
   }
