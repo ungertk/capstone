@@ -75,7 +75,11 @@ void setup() {
     Serial.println("Connecting to MQTT..."); 
     if (client.connect("ESP32Client", mqttUser, mqttPassword )) 
     { 
-      Serial.println("connected");   
+      Serial.println("connected"); 
+      client.subscribe("esp32/outlet0/onoff");
+      client.subscribe("esp32/outlet1/onoff");  
+      client.subscribe("esp32/outlet2/onoff");  
+      client.subscribe("esp32/outlet3/onoff");    
     } 
     else 
     {
@@ -135,16 +139,25 @@ void callback(char* topic, byte* message, unsigned int length) {
 
   // If a message is received on the topic esp32/output, you check if the message is either "on" or "off". 
   // Changes the output state according to the message
-  if (String(topic) == "esp32/output") {
-    Serial.print("Changing output to ");
-    if(messageTemp == "on"){
-      Serial.println("on");
-      //digitalWrite(ledPin, HIGH);
-    }
-    else if(messageTemp == "off"){
-      Serial.println("off");
-      //digitalWrite(ledPin, LOW);
-    }
+  if(String(topic) == "esp32/outlet0/onoff")
+  {
+    setRelay(0,(messageTemp == "true") ? 1 : 0);
+    setRelayState(0,(messageTemp == "true") ? 1 : 0); 
+  }
+  else if(String(topic) == "esp32/outlet1/onoff")
+  {
+    setRelay(1,(messageTemp == "true") ? 1 : 0);
+    setRelayState(1,(messageTemp == "true") ? 1 : 0);  
+  }
+  else if(String(topic) == "esp32/outlet2/onoff")
+  {
+    setRelay(2,(messageTemp == "true") ? 1 : 0);
+    setRelayState(2,(messageTemp == "true") ? 1 : 0); 
+  }
+  else if(String(topic) == "esp32/outlet3/onoff")
+  {
+    setRelay(3,(messageTemp == "true") ? 1 : 0);
+    setRelayState(4,(messageTemp == "true") ? 1 : 0); 
   }
 }
 
@@ -156,7 +169,7 @@ void reconnect() {
     if (client.connect("ESP8266Client")) {
       Serial.println("connected");
       // Subscribe
-      client.subscribe("esp32/output");
+      client.subscribe("esp32/output ");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -203,13 +216,13 @@ void loop()
     int reads[] = {0, 0, 0, 0};
     for (int i = 0; i < 4; i++) 
     {
-      reads[i] = getCurrent(acs_io_map[i], i);
-      Serial.print("Outlet: ");
-      Serial.print(i);
-      Serial.println(reads[i]);
+//      reads[i] = getCurrent(acs_io_map[i], i);
+//      Serial.print("Outlet: ");
+//      Serial.print(i);
+//      Serial.println(reads[i]);
       char topic[32];
       char payload[32];
-      snprintf(topic, 32, "esp32/outlet/%d/data", i);
+      snprintf(topic, 32, "esp32/outlet%d/data", i);
       snprintf(payload, 32, "%d", rawToPower(reads[i], i));
       client.publish(topic, payload);
     }
