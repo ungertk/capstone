@@ -44,7 +44,11 @@ class PowerMonitorState extends State<PowerMonitor> {
     setState(() => _onOff1 = value);
     publishSwitchChange("esp32/outlet0/onoff", value);
   } 
-  void _powerChange1(bool value) => setState(() => _highPerformance1 = value);
+  void _powerChange1(bool value) 
+    {
+    setState(() => _highPerformance1 = value);
+    publishSwitchChange("esp32/outlet0/hpm", value);
+  } 
 
   bool _onOff2 = false;
   bool _highPerformance2 = false;
@@ -52,8 +56,13 @@ class PowerMonitorState extends State<PowerMonitor> {
   {
     setState(() => _onOff2 = value);
     publishSwitchChange("esp32/outlet1/onoff", value);
-  } 
-  void _powerChange2(bool value) => setState(() => _highPerformance2 = value);
+  }
+
+  void _powerChange2(bool value) 
+  {
+    setState(() => _highPerformance2 = value);
+    publishSwitchChange("esp32/outlet1/hpm", value);
+  }
 
   bool _onOff3 = false;
   bool _highPerformance3 = false;
@@ -62,7 +71,11 @@ class PowerMonitorState extends State<PowerMonitor> {
     setState(() => _onOff3 = value);
     publishSwitchChange("esp32/outlet2/onoff", value);
   } 
-  void _powerChange3(bool value) => setState(() => _highPerformance3 = value);
+  void _powerChange3(bool value) 
+  {
+    setState(() => _highPerformance3 = value);
+    publishSwitchChange("esp32/outlet2/hpm", value);
+  }
 
   bool _onOff4 = false;
   bool _highPerformance4 = false;
@@ -71,8 +84,11 @@ class PowerMonitorState extends State<PowerMonitor> {
     setState(() => _onOff4 = value);
     publishSwitchChange("esp32/outlet3/onoff", value);
   } 
-  void _powerChange4(bool value) => setState(() => _highPerformance4 = value);
-
+  void _powerChange4(bool value) 
+  {
+    setState(() => _highPerformance4 = value);
+    publishSwitchChange("esp32/outlet3/hpm", value);
+  } 
   Future <int> mqttConnect() async {
     client = MQTT.MqttClient.withPort('m15.cloudmqtt.com', 'BuqqApp', 11322);
     client.setProtocolV311();

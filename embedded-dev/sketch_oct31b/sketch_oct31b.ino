@@ -27,11 +27,13 @@ const int relay_io_map[] = {18, 19, 23, 22, 17, 16, 4, 2}; //the I/Os being used
 int relay_states[] = {0,0,0,0};
 const int acs_io_map[] = {33, 35, 32, 34}; //the I/Os being used for ACS723 input
 
+long high_performance[] = {60000,60000,60000,60000};
+
 WebServer server(80);
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-long lastMsg = 0;
+long lastMsg[] = {0, 0, 0, 0};
 char msg[50];
 int value = 0;
 /*
@@ -85,7 +87,11 @@ void setup() {
       client.subscribe("esp32/outlet0/onoff");
       client.subscribe("esp32/outlet1/onoff");  
       client.subscribe("esp32/outlet2/onoff");  
-      client.subscribe("esp32/outlet3/onoff");    
+      client.subscribe("esp32/outlet3/onoff");  
+      client.subscribe("esp32/outlet0/hpm");
+      client.subscribe("esp32/outlet1/hpm");  
+      client.subscribe("esp32/outlet2/hpm");  
+      client.subscribe("esp32/outlet3/hpm");   
     } 
     else 
     {
@@ -158,6 +164,22 @@ void callback(char* topic, byte* message, unsigned int length) {
     setRelay(3,(messageTemp == "true") ? 1 : 0);
     setRelayState(4,(messageTemp == "true") ? 1 : 0); 
   }
+  else if(String(topic) == "esp32/outlet0/hpm")
+  {
+    high_performance[0] = (messageTemp == "true") ? 1000 : 60000;
+  }
+  else if(String(topic) == "esp32/outlet1/hpm")
+  {
+    high_performance[1] = (messageTemp == "true") ? 1000 : 60000;  
+  }
+  else if(String(topic) == "esp32/outlet2/hpm")
+  {
+    high_performance[2] = (messageTemp == "true") ? 1000 : 60000;
+  }
+  else if(String(topic) == "esp32/outlet3/hpm")
+  {
+    high_performance[3] = (messageTemp == "true") ? 1000 : 60000; 
+  }
 }
 
 void reconnect() {
@@ -204,25 +226,19 @@ void loop()
     reconnect();
   }
   client.loop();
-  long now = millis();
-    
-  if (now - lastMsg > 5000) 
+  
+  for (int i = 0; i < 4; i++) 
   {
-    lastMsg = now;
-    int acs_res[] = {0,0,0,0};
-    read_acs(acs_res);
-
-    int reads[] = {0, 0, 0, 0};
-    for (int i = 0; i < 4; i++) 
+    long now = millis();   
+    if (now - lastMsg[i] > high_performance[i]) 
     {
-      reads[i] = getCurrent(acs_io_map[i], i);
-      if(i == 0)
-      {
-        Serial.print("Outlet: ");
-        Serial.print(i);
-        Serial.println(reads[i]);
-      }
+      lastMsg[i] = now;
+      int acs_res[] = {0,0,0,0};
+      read_acs(acs_res);
 
+      int reads[] = {0, 0, 0, 0};
+
+      reads[i] = getCurrent(acs_io_map[i], i);
       char topic[32];
       char payload[32];
       snprintf(topic, 32, "esp32/outlet%d/data", i);
